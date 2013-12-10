@@ -1,0 +1,38 @@
+\chapter{Introduzione}
+
+\section{L'azienda}
+Dal 2004 Redomino cura lo sviluppo, la commercializzazione e la manutenzione di piattaforme digitali open source per il business e dal 2007 fornisce servizi nei settori del digital marketing, del social media marketing e più di recente del green marketing e della co-creazione. La divisione green marketing di Redomino aiuta i clienti a comunicare al meglio i propri valori e le proprie eccellenze nel settore socio-ambientale con l'obiettivo di sviluppare innovative forme di business.
+
+\section{Obiettivi}
+Il tirocinio si è incentrato sull'apprendimento del linguaggio Python, del framework Django e delle API Facebook. 
+E' stata realizzata, attraverso il supporto formativo del tutor aziendale e figure specializzate all'interno dIntegrazione con Facebook Backendell'azienda, un'applicazioni web in grado di integrare come Facebook App un e-commerce. 
+L'obiettivo non è stato quello di creare un sistema completo, ma dei moduli riusabili che prototipino il comportamento richiesto. 
+Componenti fondamentali del tirocinio saranno anche l'interazione con le comunita' open source che seguono i suddetti progetti, e la documentazione di quanto svolto.
+
+\section{Tecnologie al contorno}
+Le tecnologie utilizzate durante lo sviluppo del progetto sono quelle ritenute molto spesso necessarie per la maggior parte dei progetti di sviluppo software. Tra queste:
+\begin{itemize}
+\item software di controllo versione, in particolare quello fornito da https://github.com, che è stato utile per le seguenti azioni:
+	\begin{itemize}
+	\item creazione di un repository: <git init>;
+	\item aggiunta di file al repository: <git add “nome file”>, <git commit -m “messaggio che descrive la modifica”>, <git push>;
+	\item mostra i cambiamenti tra file versionati e quelli in locale in fase di sviluppo: <git diff “nome file”>;
+	\item ripristino ad una versione precedente di uno o più file del progetto, o: <git checkout “nome file”>.
+	\end{itemize}
+\item un build system basato su Python per creare, assemblare e sviluppare applicazioni da piu parti, alcune delle quali potrebbe non essere scritte in Python. Creare un file di configurazione Buildout permette di riprodurre lo stesso software dopo lo sviluppo dello stesso senza perdite di tempo.
+
+“While not directly aiming to solve world peace, it perhaps will play a role in the future, as people will be less angry about application deployment and will have more time for making love and music." --Noah Gift, co-author of 'Python For Unix and Linux' from O'Reilly.”
+\item virtualenv, un tool che permette di creare versioni isolate dell'ambiente Python, utile per svariati motivi, tra cui:
+	\begin{itemize}
+	\item ogni virtualenv ha i permessi dell’utente che lo crea, quindi per installare pacchetti addizionali non occorrono i permessi di root;
+	\item lasciare l’installazione del sistema il più snella possibile;
+	\item aggiornare una o più librerie di Python, senza che venga compromesso il funzionamento di altri programmi.
+	\end{itemize}
+\item E' stato necessario inoltre ottenere un certificato SSL, in quanto le politiche Facebook riguardanti le applicazioni prevedono come requisito una connessione sicura https. Openssl toolkit è stato utilizzato per generare una RSA Private Key e un CSR (Certificate Signing Request).  Il CSR può essere utilizzato in due modi: 
+	\begin{itemize}
+	\item può essere inviato ad una Certificate Authority, come Thawte or Verisign che verificherà l'identità del  richiedente ed emetterà un signed certificate;
+	\item la seconda opzione è creare un CSR self-signed.
+	\end{itemize}
+Per i nostri scopi non è stato sufficiente ottenere un certificato self-signed.
+\end{itemize}
+\endinput

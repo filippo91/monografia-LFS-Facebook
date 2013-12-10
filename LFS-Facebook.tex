@@ -1,0 +1,122 @@
+\chapter{LFS-Facebook}
+
+\section{Django Framework}
+Django è un framework di alto livello per Python, che ha l'obiettivo di rendere facile e veloce lo sviluppo di applicazioni web.
+.... forse spiego grossolanemente cosa fanna le parti che ho modificato in django....
+ 
+\section{Progetti di partenza}
+Una fase preliminare del tirocinio è stata impiegata principalmente nello studio di due progetti open source: LFS e django-facebook.
+LFS è un negozio online che  si basa su Python, Django e jQuery. A questo è stato aggiunto poi un tema responsivo, ed ha rappresentato il progetto base sul quale si è lavorato per aggiungere delle funzionalità legate alla sua integrazione come applicazione fruibile su Facebook. 
+
+Django-facebook, invece, permette ad applicazioni django di registrare gli utenti tramite backend Facebook, convertendo i dati dell'utente in un modello consono a django.
+
+\section{Gestione Backend}
+Un'esigenza che un progetto di un'applicazione potrebbe avere è quella di dover/voler pescare da un'altra sorgente di usernames e passwords.
+
+Questo è proprio il nostro caso, vogliamo usare come backend di autenticazione quello di Facebook.
+Per iniziare a prender un po' la mano abbiamo iniziato provando a far funzionare un'applicazione django come LFS con un LDAP. 
+
+LDAP è un protocollo di livello applicativo per accedere e gestire servizi di directory su una rete IP. Uno degli usi più comuni di LDAP è quello di fornire un “single sign-on” dove per la coppia d'informazioni utente:password è condivisa tra diversi servizi.
+Nel nostro caso è stato utilizzato openLDAP, un'implementazione opensource del suddetto protocollo.
+
+
+Per aggiungere questa funzionalità ad un'applicazione Django è necessario modificare la variabile AUTHENTICATION BACKENDS del file setting.py, in particolare Django mantiene una lista di “authentication backends” che egli verifica per ogni autenticazione. 
+
+%\begin{lstlisting}[frame=single]
+%	AUTHENTICATION_BACKENDS = (
+%    'django_auth_ldap.backend.LDAPBackend',
+%    'django.contrib.auth.backends.ModelBackend',
+%	)
+%\end{lstlisting}
+
+Quando qualcuno cerca di autenticarsi, Django prova l'autenticazione lungo tutta la lista di backend per cui è impostato. 
+Attenzione che l'ordine è importante in quanto django si fermerà al primo match positivo.
+
+%Con LDAP sono necessarie una serie di altre opzioni da aggiungere al file di setting, mentre per accedere al backend di autenticazione di Facebook è sufficente aggiungere in testa alla lista AUTHENTICATION_BACKENDS 'django_facebook.auth_backends.FacebookBackend'.
+
+\section{Integrare un applicazione come Facebook App}
+Per inserire l'applicazione tra le App di Facebook è necessario procurarsi innanzitutto le credenziali, in modo da.....
+Qui i passi utili per ottenerle:
+\begin{itemize}
+	\item raggiungere la Facebook Developers Apps page;
+	\item registrarsi come sviluppatore se non lo si è già;
+	\item creare una nuova applicazione cliccando sull'aposito pulsante;
+	\item accettare le normative della piattaforma Facebook;
+\end{itemize}
+Così facendo, sulla pagina principale dell'applicazione sono disponibili le due credenziali utili per il proseguo: ID applicazione e App Secret.
+Adesso vanno inserite nel file di setting del progetto:
+
+\begin{lstlisting}[frame=single]
+FACEBOOK_APP_ID = 'YOUR APP ID'
+FACEBOOK_APP_SECRET = 'YOUR APP SECRET NUMBER'
+\end{lstlisting}
+%FACEBOOK_CANVAS_PAGE = 'https://apps.facebook.com/%s/' % FACEBOOK_APP_ID
+Da notare che è richiesta una connessione https.
+
+\section{Protezione delle viste con autenticazione richiesta}
+L'applicazione si presenta senza un link ad una pagina di login, in quanto l'utente sarà automaticamente rediretto alla procedura di autenticazione quando e se necessario. 
+
+Per ottenere questo comportamento si è scelto di creare un decoratore che protegga le viste desiderate.
+Le viste da proteggere non sono imposte dal sistema, ma è tutto pienamente configurabile attravrso il file di setting. Infatti, è stato creato un dizionario di variabili booleane, a ciascuna delle quali corrisponde una pagina che è possibile proteggere settando come 'True' la variabile in questione.
+
+\begin{lstlisting}[frame=single]
+VIEW_WITH_LOGIN_REQUIRED = {
+    'add-to-cart': True, #True or False
+    'shop': False, #True or False
+    'category': False, #True or False
+    'product': False, #True or False
+    'checkout': False, #True or False
+}
+\end{lstlisting}
+
+Se una vista è protetta da decoratore, sarà dunque scandito l'elenco di variabili: se la variabile corrispondente è uguale a True, sarà chiamato un altro decoratore, nativo del framework Django, @login\textunderscore required, che verificherà lo stato dell'utente, che se loggato procederà verso la pagina richiesta, altrimenti sarà rediretto alla pagina di login.
+
+\begin{lstlisting}[frame=single]
+def permissions_required(view_name):
+    
+    def decorator(func):
+        if settings.VIEW_WITH_LOGIN_REQUIRED[view_name]:
+            return login_required(func)
+        else:
+            return func
+
+    return decorator
+\end{lstlisting}
+
+Comunque si può scegliere di non proteggere alcuna vista e permettere la libera navigazione all'utente che agirà come utente anonimo, potendo aggiungere prodotti al carrello, andare alla cassa, decidere di completare l'acquisto e quindi effettuare il pagamento.
+
+\subsection{Pagina di login}
+La pagina di login è stata modificata facendo un override di quella esistente attraverso il linguaggio di template di django, che permette, tra le altre cose, di ereditare da una pagina html e sovrascrivere i blocchi che si vuole.
+
+\begin{lstlisting}[language=html]
+{% extends "lfs/customer/login.html" %} -> inheritance
+{% block wrapper %} -> blocco da sovrascrivere
+...
+{% endblock %}
+\end{lstlisting}
+
+richiesta di connessione in poll 
+
+\begin{lstlisting}[language=JavaScript]
+
+var myVar = setInterval(function(){
+    if(F !== undefined){
+        F.connect(document.getElementById('facebook_form'), 
+        ['email', 'user_about_me', 'user_birthday', 'user_website', 'user_likes']);
+        clearInterval(myVar);
+    }
+    }, 500);
+
+\end{lstlisting}
+
+\subparagraph{template override}
+L'override di un template pre-esistente viene effettuato creando un file html con lo stesso identico nome e dovrà essere riprodotta l'alberatura. Per esempio se voglio sovrascrivere lfs/templates/lfs/base.html, dovrò creare un file base.html in myapp/templates/lfs/base.html. 
+
+Dopodichè è necessario anche intervenire nel file di setting ed assicurarsi che fra le INSTALLED\_ APPS, myapp appaia prima della applicazione di cui vogliamo sovrascrivere il template.
+
+\subsection{Pagina di checkout}
+\section{Personalizzazione del modello utente}
+\section{Facebook plugin e API}
+\section{Prodotti riservati ai fan}
+\section{Internazionalizzazione}
+\endinput

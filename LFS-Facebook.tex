@@ -119,4 +119,24 @@ Dopodichè è necessario anche intervenire nel file di setting ed assicurarsi ch
 \section{Facebook plugin e API}
 \section{Prodotti riservati ai fan}
 \section{Internazionalizzazione}
+Lo sviluppo di un’applicazione web richiede, sempre più frequentemente, di potere essere utilizzata da una moltitudine di utenti di lingue e culture diverse.
+
+La soluzione a questa esigenza è di consentire a questi utenti di poter scegliere la lingua con cui desiderano navigare le pagine dell’applicazione stessa.
+
+L'internazionalizzazione è il processo mediante il quale vengono eliminati dal codice sorgente i preconcetti culturali quali il formato della data, la formattazione dei numeri, la visualizzazione di immagini raffiguranti elementi tipici di un determinato paese (autobus, cassette della posta, ecc.). 
+
+La Localizzazione è il processo di adattamento di un’applicazione per permetterle di poter cambiare dinamicamente le risorse presenti nelle pagine: principalmente stringhe ma anche file di testo, immagini, file audio e ogni altro tipo di contenuto inseribile in una pagina web.
+Quindi codice del tipo:
+
+lblMessaggio.Text = “Ciao Mondo!”
+
+deve essere riscritto in modo che la stringa “Ciao Mondo!” non sia statica, ma possa variare in modalità runtime secondo la lingua scelta dall’utente.
+
+Django supporta pienamente la traduzione del testo, formattazione delle date, orari, numeri e  time zones.
+
+Questo viene fatto essenzialmente attraverso due passi:
+\begin{itemize}
+	\item si specificano quali parti della propria app dovrebbero essere tradotte o formattate per culture e/o lingue specifiche;
+	\item django usa questi "ganci" per localizzare la Web app per un utente specifico secondo le proprie impostazioni.
+\end{itemize}
 \endinput

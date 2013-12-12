@@ -34,7 +34,7 @@ Attenzione che l'ordine è importante in quanto django si fermerà al primo matc
 
 %Con LDAP sono necessarie una serie di altre opzioni da aggiungere al file di setting, mentre per accedere al backend di autenticazione di Facebook è sufficente aggiungere in testa alla lista AUTHENTICATION_BACKENDS 'django_facebook.auth_backends.FacebookBackend'.
 
-\section{Integrare un applicazione come Facebook App}
+\section{Integrare un'applicazione come Facebook App}
 Per inserire l'applicazione tra le App di Facebook è necessario procurarsi innanzitutto le credenziali, in modo da.....
 Qui i passi utili per ottenerle:
 \begin{itemize}
@@ -102,7 +102,8 @@ richiesta di connessione in poll
 var myVar = setInterval(function(){
     if(F !== undefined){
         F.connect(document.getElementById('facebook_form'), 
-        ['email', 'user_about_me', 'user_birthday', 'user_website', 'user_likes']);
+        ['email', 'user_about_me', 'user_birthday', 
+        'user_website', 'user_likes']);
         clearInterval(myVar);
     }
     }, 500);
@@ -116,8 +117,80 @@ Dopodichè è necessario anche intervenire nel file di setting ed assicurarsi ch
 
 \subsection{Pagina di checkout}
 \section{Personalizzazione del modello utente}
+Il modello è l'unica fonte di informazione a riguardo dei dati che vogliamo memorizzare. Esso contiene i campi e il comportamento per la memorizzazione. 
+
+Quello che vogliamo fare è modificare il modello che definisce la gestione delle informazioni riferite all'utente. Per far questo, si è creato un file models.py, contenente una nuova classe che rappresenta il modello. Questa eredita da FacebookProfileModel la quale è la classe del pacchetto django-facebook che gestiva le informazioni ottenute dal backend di Facebook.
+
+\begin{lstlisting}
+class LfsFbUser(FacebookProfileModel):
+    user = models.OneToOneField(User)
+    fb_like_flag = models.BooleanField(default=False)
+	
+	...	
+	
+    class Meta():
+            db_table = 'fb_data'
+\end{lstlisting}
+
+Per settare django affinchè usi il modello appena creato, bisogna modificare il file di setting, aggiungendo infondo al file oppure modificando la voce esistente, in modo da avere:
+\begin{lstlisting}
+AUTH_PROFILE_MODULE = 'lfs_facebook.LfsFbUser'
+\end{lstlisting}
+
+
 \section{Facebook plugin e API}
+All'interno delle pagine html si è fatto uso di svariati plugin il codice è fornito in automatica agli sviluppatori registrati sulla piattaforma.
+
+Inoltre si sono acquisite delle informazioni del profilo Facebook attraverso delle API che permettono di fare delle chiamate al database attraverso istruzioni FQL.
+
 \section{Prodotti riservati ai fan}
+
+%in catalog/patches.py
+
+\begin{lstlisting}
+fb_reserved = "False"
+    for p in product.get_properties():
+        if p.title == settings.FACEBOOK_FAN_RESERVED_PROPERTY:
+            fb_reserved = "True"
+\end{lstlisting}
+
+%templates/lfs/catalog/product_base.html
+
+\begin{lstlisting}
+var fql_query = "SELECT uid 
+				FROM page_fan 
+				WHERE page_id = "+fbPage+
+				" and uid = "+user_id;
+    
+    $(document).ready(FB.api({
+        method: 'fql.query',
+        query: fql_query
+    },
+    function(response){
+        //FB.api('/me/permissions', function(response) {
+        //});
+        if(fbReserved == "True"){
+            //product available facebook fan only,
+            //check if user likes your facebook page
+            if (response.length == 1 && response[0].uid == user_id){
+                //he like it, so you able add-to-cart button
+                //and show some message in the page
+                allowPurchase(true);
+            } else {
+                //he doesn't like it, so you disable add-to-cart button
+                //and show some message in the page
+                allowPurchase(false);
+            }
+        }else{
+            //product available for all
+            $("#add-to-cart").prop('disabled', false);
+
+            $("#fb-no-like").hide();
+            $("#fb-already-like").hide();
+        }
+    }));
+\end{lstlisting}
+
 \section{Internazionalizzazione}
 Lo sviluppo di un’applicazione web richiede, sempre più frequentemente, di potere essere utilizzata da una moltitudine di utenti di lingue e culture diverse.
 
@@ -139,4 +212,15 @@ Questo viene fatto essenzialmente attraverso due passi:
 	\item si specificano quali parti della propria app dovrebbero essere tradotte o formattate per culture e/o lingue specifiche;
 	\item django usa questi "ganci" per localizzare la Web app per un utente specifico secondo le proprie impostazioni.
 \end{itemize}
+
+La parola 'Internationalization' è spesso abbreviata con 'i18n'. Questa abbreviazione è largamente usata, deriva dal fatto che ci sono 18 lettere tra la 'i' e la 'n'.
+
+Sebbene il meccanismo di traduzione può essere avviato da molti tipi di file, per esempio nel codice python, javascript, etc... per il nostro lavoro è stato sufficiente supportare l'internazionalizzazione nell'html. Più in dettaglio, in testa alle pagine desiderate, in accordo con il linguaggio django, è stato inserito  il tag\lstinline${% include 'i18n' %}$, ogni elemento di cui si disporrà di una traduzione va inserito tra il tag -> \lstinline${% trans '<item>' %}$.
+
+Successivamente è stato necessario scrivere la traduzione. Per far questo si utilizza il comando
+\lstinline$<django-admin.py makemessages -l <id_language>>$
+il quale crea un file con l'elenco delle voci da tradurre e la giusta alberatura  nel quale inserirlo. Ovviamente adesso va qui inserita la traduzione frase per frase. Successivamente lanciando il comando 
+\lstinline$<django-admin.py compilemessages>$
+verrà creato il file di estensione .mo utilizzato dal sistema per le traduzioni.
+
 \endinput

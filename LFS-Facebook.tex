@@ -1,24 +1,19 @@
 \chapter{LFS-Facebook}
-
-\section{Django Framework}
-Django è un framework di alto livello per Python, che ha l'obiettivo di rendere facile e veloce lo sviluppo di applicazioni web.
-.... forse spiego grossolanemente cosa fanna le parti che ho modificato in django....
  
 \section{Progetti di partenza}
 Una fase preliminare del tirocinio è stata impiegata principalmente nello studio di due progetti open source: LFS e django-facebook.
-LFS è un negozio online che  si basa su Python, Django e jQuery. A questo è stato aggiunto poi un tema responsivo (anch'esso utilizza tra l'altro un progetto open-source, bootstrap), ed ha rappresentato la base sulla quale aggiungere delle funzionalità legate alla sua integrazione come applicazione fruibile su Facebook. 
+LFS è un negozio online che  si basa su Python, Django(Web framework per Python) e jQuery. A questo è stato aggiunto poi un tema responsivo (anch'esso utilizza tra l'altro un progetto open-source, bootstrap), ed ha rappresentato la base sulla quale aggiungere delle funzionalità legate alla sua integrazione come applicazione fruibile su Facebook. 
 
 Django-facebook, invece, permette ad applicazioni django di registrare gli utenti tramite backend Facebook, convertendo i dati ricevuti dall'operazione di log in con Facebook, in un modello consono alle modalità di storing attraverso django.
 
-\section{Gestione Backend}
+\section{Gestione backend di autenticazione}
 Un'esigenza che un progetto di un'applicazione potrebbe avere è quella di dover/voler pescare da un'altra sorgente di usernames e passwords.
 
 Questo è proprio il nostro caso, vogliamo usare come backend di autenticazione quello di Facebook.
-Per iniziare a prender un po' la mano abbiamo iniziato provando a far funzionare un'applicazione django come LFS con un LDAP. 
+Per iniziare si è testata un'applicazione django come LFS con LDAP. 
 
 LDAP è un protocollo di livello applicativo per accedere e gestire servizi di directory su una rete IP. Uno degli usi più comuni di LDAP è quello di fornire un “single sign-on” dove per la coppia d'informazioni utente:password è condivisa tra diversi servizi.
 Nel nostro caso è stato utilizzato openLDAP, un'implementazione opensource del suddetto protocollo.
-
 
 Per aggiungere questa funzionalità ad un'applicazione Django è necessario modificare la variabile AUTHENTICATION BACKENDS del file setting.py, in particolare Django mantiene una lista di “authentication backends” che egli verifica per ogni autenticazione. 
 
@@ -35,15 +30,16 @@ Attenzione che l'ordine è importante in quanto django si fermerà al primo matc
 %Con LDAP sono necessarie una serie di altre opzioni da aggiungere al file di setting, mentre per accedere al backend di autenticazione di Facebook è sufficente aggiungere in testa alla lista AUTHENTICATION_BACKENDS 'django_facebook.auth_backends.FacebookBackend'.
 
 \section{Integrazione dell'applicazione sulla piattaforma Facebook}
-Per inserire l'applicazione tra le App di Facebook è necessario procurarsi innanzitutto le credenziali, in modo da.....
+Per inserire l'applicazione tra le App di Facebook è necessario procurarsi innanzitutto le credenziali.
+
 Qui i passi utili per ottenerle:
 \begin{itemize}
-	\item raggiungere la Facebook Developers Apps page;
+	\item raggiungere la Facebook Developers page;
 	\item registrarsi come sviluppatore se non lo si è già;
 	\item creare una nuova applicazione cliccando sull'aposito pulsante;
 	\item accettare le normative della piattaforma Facebook;
 \end{itemize}
-Così facendo, sulla pagina principale dell'applicazione sono disponibili le due credenziali utili per il proseguo: ID applicazione e App Secret.
+Accedendo alla pagina principale dell'applicazione sono disponibili le due credenziali utili per il proseguo: ID applicazione e App Secret.
 Adesso vanno inserite nel file di setting del progetto:
 
 \begin{lstlisting}

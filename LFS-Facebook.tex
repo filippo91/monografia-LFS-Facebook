@@ -1,5 +1,5 @@
 \chapter{LFS-Facebook}
- 
+
 \section{Progetti di partenza}
 Una fase preliminare del tirocinio è stata impiegata principalmente nello studio di due progetti open source: LFS e django-facebook.
 
@@ -21,34 +21,49 @@ Per aggiungere questa funzionalità ad un'applicazione Django è necessario modi
 Quando qualcuno cerca di autenticarsi, Django prova l'autenticazione lungo tutta la lista di backend per cui è impostato. 
 Attenzione che l'ordine è importante in quanto django si fermerà al primo match positivo.
 
-Per quanto riguardo openLDAP sono necessarie tutta un'altra serie di impostazioni da specificare per l'accesso al server, e la ricerca; mentre per quanto riguarda il backend i autenticazione di Facebook è sufficente aggiungere nel file di setting:
+Per quanto riguardo openLDAP sono necessarie anche tutta un'altra serie di impostazioni da specificare per l'accesso al server, e la ricerca; qui un esempio di configurazione minimale:
+\begin{lstlisting}
+AUTH_LDAP_SERVER_URI = "ldap://ldap.example.com"
+
+AUTH_LDAP_BIND_DN = "cn=django-agent,dc=example,dc=com"
+AUTH_LDAP_BIND_PASSWORD = "phlebotinum"
+AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=users,dc=example,dc=com",
+    ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
+\end{lstlisting}
+vengono così configurate  due operazioni fondamentali: Bind, che esegue l'autenticazione, e Search che esegue una ricerca. Nella struttura ad albero, ad ogni livello esiste un Relative distinguished name (RDN) che lo identifica (ad esempio ou=people). L'unione di tutti i RDN, presi in successione dal nodo foglia fino alla radice, costituisce il distinguished name (DN), una stringa che rappresenta univocamente una entry nella directory. Nell'esempio di configurazione viene fornito il DN di un utente che ha i permessi per fare determinate azioni, e diamo il sottoalbero dove ricercare gli utenti come primo parametro della LDAPSearch.
+ 
+Mentre per quanto riguarda il backend di autenticazione di Facebook è sufficente aggiungere al file di setting:
 
 \begin{lstlisting}
 
 AUTHENTICATION_BACKENDS = (
 	'django_facebook.auth_backends.FacebookBackend',
 	'django_auth_ldap.backend.LDAPBackend',
-	...
+	'django.contrib.auth.backends.ModelBackend'
 )
 
 \end{lstlisting}
 
 Da notare che va inserito in testa alla lista.
 
+\newpage 
 \section{Integrazione dell'applicazione sulla piattaforma Facebook}
-
 \begin{figure}
+\centering
 \includegraphics[width=0.9\columnwidth]{img/main_page}
+\caption{home page on Facebook}
 \end{figure}
-
 Per inserire l'applicazione tra le App di Facebook è necessario procurarsi innanzitutto le credenziali.
 
 Qui i passi utili per ottenerle:
 \begin{itemize}
-	\item raggiungere la Facebook Developers page;
-	\item registrarsi come sviluppatore se non lo si è già;
-	\item creare una nuova applicazione cliccando sull'apposito pulsante;
+	\item raggiungere la Facebook Developers page\footnote{https://developers.facebook.com/} e autenticarsi con username e password del proprio account facebook;
+	\item cliccare su "Create New App";
+	\item se non si vede quest'opzione, cliccare su "Register as Developer";
+	\item inserire un nome per l'applicazione nel campo "App Name";
 	\item accettare le normative della piattaforma Facebook;
+	\item inserire il proprio dominio nel campo "App Domains"; poi, portarsi alla sezione "Select how your app integrates with Facebook" e selezionare "Website with Facebook Login." Questa sezione mostrerà un campo "Site URL" dove digitare nuovamente il dominio;
+	\item cliccare su "Save Changes".
 \end{itemize}
 Accedendo alla pagina principale dell'applicazione sono disponibili le due credenziali utili per il proseguo: ID applicazione e App Secret.
 Adesso vanno inserite nel file di setting del progetto:
@@ -59,10 +74,26 @@ FACEBOOK_APP_ID = 'YOUR APP ID'
 FACEBOOK_APP_SECRET = 'YOUR APP SECRET NUMBER'
 
 \end{lstlisting}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\columnwidth]{img/app_home2}
+\caption{basic page for your app}
+\end{figure}
 
 %FACEBOOK_CANVAS_PAGE = 'https://apps.facebook.com/%s/' % FACEBOOK_APP_ID
 
 Da notare che è richiesta una connessione https.
+
+\subsection{Facebook plugin}
+Facebook fornisce strumenti, servizi ed SDKs per integrare una social experience nelle apps. All'interno delle pagine html di LFS-Facebook si è fatto uso di social plugin il cui codice è fornito agli sviluppatori registrati sulla piattaforma tramite delle pagine nella documentazione che permettono di settare parametri per customizzare il formato dei vari plugin per poi generare il codice di cui fare copy and paste.
+
+Inoltre si sono acquisite delle informazioni del profilo Facebook attraverso delle istruzioni FQL. Facebook Query Language, o FQL, permette di interfacciarci, in modo simile ad SQL, per interrogare i dati ottenuti dalle Graph API.
+
+Le query hanno questa struttura: 
+\begin{lstlisting}
+SELECT [fields] FROM [table] WHERE [conditions]. 
+\end{lstlisting}
+Diversamente da SQL la clausola FROM può contenere solo una tabella. Ad ogni query ci si può riferire all'utente loggato attraverso "me()". 
 
 \section{Protezione delle viste con autenticazione richiesta}
 L'applicazione si presenta senza un link ad una pagina di login, in quanto l'utente sarà automaticamente rediretto alla procedura di autenticazione quando e se necessario. 
@@ -116,7 +147,9 @@ La pagina di login è stata modificata facendo un override di quella esistente a
 \end{lstlisting}
 
 \begin{figure}
+\centering
 \includegraphics[width=0.9\columnwidth]{img/richiesta_permessi}
+\caption{richiesta permessi da parte dell'applicazione}
 \end{figure}
 
 Si è scelto di presentare una pagina di login che non richieda nessuna interazione all'utente, infatti l'autenticazione si avvierà in automatico. Per far questo si è utilizzato del codice javascript di django-facebook che effettua il login facebook attraverso le facebook API; il tutto viene scatenato dall'istruzione "F.connect()", ma essendo F una variabile che viene caricata asincronamente, è stato necessario inserire la F.connect all'interno della funzione setInterval (utility di javascript) che prova a chiamare la F.connect ad intervalli di tempo prefissati finchè non avrà successo, ovvero fin quando F non sarà definita. Il meccanismo di chiamata periodica ad uno script verrà fermato attraverso il clearInterval().
@@ -145,7 +178,9 @@ La pagina di checkout è l'ultima pagina prima di procedere all'inserimenrto dat
 Anche di questa pagina è stato fatto un override per visualizzare ancora la possibilità di registrarsi prima dell'acquisto. Se si effettua il login sarà possibile gestire lo stato degli ordini e salvare i dati per prossime spedizioni. Il pulsante del login è un normale elemento html(non un faceboook plugin) il quale stile è stato reso simile a quello Facebook attraverso css. 
 
 \begin{figure}
+\centering
 \includegraphics[width=0.9\columnwidth]{img/checkout}
+\caption{checkout page}
 \end{figure}
 
 \section{Personalizzazione del modello utente}
@@ -170,28 +205,14 @@ Per settare django affinchè usi il modello appena creato, bisogna modificare il
 
 \begin{lstlisting}
 
-AUTH_PROFILE_MODULE = 'lfs_facebook.LfsFbUser'
+AUTH_PROFILE_MODULE = 'LFS-Facebook.LfsFbUser'
 
 \end{lstlisting}
-
-\section{Facebook plugin}
-All'interno delle pagine html si è fatto uso di svariati plugin il codice è fornito in automatica agli sviluppatori registrati sulla piattaforma.
-
-Inoltre si sono acquisite delle informazioni del profilo Facebook attraverso delle API che permettono di fare delle chiamate al database attraverso istruzioni FQL.
 
 \section{Prodotti riservati ai fan}
 Come feature aggiuntiva si è pensato di dare la possibilità a chi mette in piedi l'e-commerce, di poter riservare l'acquisto di un prodotto soltanto chi è un Facebook fan, ovvero a chi ha messo il "mi piace" alla pagina Facebook del negozio.
 
 Per far ciò bisogna connfigurare il sistema specificando l'identificativo della pagina facebook nel solito file di setting, come segue:
-
-\begin{figure}
-\subfigure[figura1]
-	{\includegraphics[width=0.5\columnwidth]{img/product_view_fb_reserved}}
-\hspace{5mm}
-\subfigure[figura1]
-	{\includegraphics[width=0.5\columnwidth]{img/product_view_no_fan}}
-\end{figure}
-
 %\begin{figure}
 %
 %\end{figure}
@@ -228,16 +249,27 @@ Per far questo si è ricorso ad una FQL Query che selezione un user ID se ha tra
 \begin{lstlisting}
 
 var fql_query = "SELECT uid 
-				FROM page_fan 
-				WHERE page_id = "+fbPage+
-				" and uid = "+user_id;
+		FROM page_fan 
+		WHERE page_id = "+fbPage+
+		" and uid = "+user_id;
 				
 \end{lstlisting}
 
 nota: Per effettuare questa query è necessario aver richiesto i permessi in fase di login. 
 
 Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conesguenza; in particolare, attraverso jQuery, se l'utente è abilitato all'acquisto, si abilita il pulsante di aggiunta al carrello e si mostra un determinato messaggio, altrimenti si disibalita il pulsante e si mostra un messaggio complementare.
-
+\begin{figure}
+\centering
+\subfigure[no reserved product]
+	{\includegraphics[width=0.9\columnwidth]
+	{img/product_view}}
+\subfigure[Facebook fan]
+	{\includegraphics[width=0.4\columnwidth]{img/detail_product_view_fb_reserved}}
+\hspace{5mm}
+\subfigure[no Facebook fan]
+	{\includegraphics[width=0.4\columnwidth]{img/detail_product_view_no_fan}}
+\caption{product view}
+\end{figure}
 \begin{lstlisting}
 
     $(document).ready(FB.api({
@@ -258,7 +290,7 @@ Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conesguenza; i
             $("#fb-already-like").hide();
         }
     }));
-    
+
 \end{lstlisting}
 
 \section{Internazionalizzazione}
@@ -285,12 +317,21 @@ Questo viene fatto essenzialmente attraverso due passi:
 
 La parola 'Internationalization' è spesso abbreviata con 'i18n'. Questa abbreviazione è largamente usata, deriva dal fatto che ci sono 18 lettere tra la 'i' e la 'n'.
 
-Sebbene il meccanismo di traduzione può essere avviato da molti tipi di file, per esempio nel codice python, javascript, etc... per il nostro lavoro è stato sufficiente supportare l'internazionalizzazione nell'html. Più in dettaglio, in testa alle pagine desiderate, in accordo con il linguaggio django, è stato inserito  il tag\lstinline${% include 'i18n' %}$, ogni elemento di cui si disporrà di una traduzione va inserito tra il tag -> \lstinline${% trans '<item>' %}$.
-
+Sebbene il meccanismo di traduzione può essere avviato da molti tipi di file, per esempio nel codice python, javascript, etc... per il nostro lavoro è stato sufficiente supportare l'internazionalizzazione nell'html. Più in dettaglio, in testa alle pagine desiderate, in accordo con il linguaggio django, è stato inserito  il tag
+\begin{lstlisting}
+{% include 'i18n' %}
+\end{lstlisting}
+ed ogni elemento di cui si disporrà di una traduzione va inserito tra il tag \begin{lstlisting}
+{% trans '<item>' %}
+\end{lstlisting}
 Successivamente è stato necessario scrivere la traduzione. Per far questo si utilizza il comando
-\lstinline$<django-admin.py makemessages -l <id_language>>$
+\begin{lstlisting}
+django-admin.py makemessages -l <id_language>
+\end{lstlisting}
 il quale crea un file con l'elenco delle voci da tradurre e la giusta alberatura  nel quale inserirlo. Ovviamente adesso va qui inserita la traduzione frase per frase. Successivamente lanciando il comando 
-\lstinline$<django-admin.py compilemessages>$
+\begin{lstlisting}
+<django-admin.py compilemessages>
+\end{lstlisting}
 verrà creato il file di estensione .mo utilizzato dal sistema per le traduzioni.
 
 \endinput

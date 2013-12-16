@@ -46,10 +46,12 @@ Qui i passi utili per ottenerle:
 Così facendo, sulla pagina principale dell'applicazione sono disponibili le due credenziali utili per il proseguo: ID applicazione e App Secret.
 Adesso vanno inserite nel file di setting del progetto:
 
+\begin{shaded}
 \begin{lstlisting}
 FACEBOOK_APP_ID = 'YOUR APP ID'
 FACEBOOK_APP_SECRET = 'YOUR APP SECRET NUMBER'
 \end{lstlisting}
+\end{shaded}
 
 %FACEBOOK_CANVAS_PAGE = 'https://apps.facebook.com/%s/' % FACEBOOK_APP_ID
 
@@ -61,6 +63,7 @@ L'applicazione si presenta senza un link ad una pagina di login, in quanto l'ute
 Per ottenere questo comportamento si è scelto di creare un decoratore che protegga le viste desiderate.
 Le viste da proteggere non sono imposte dal sistema, ma è tutto pienamente configurabile attravrso il file di setting. Infatti, è stato creato un dizionario di variabili booleane, a ciascuna delle quali corrisponde una pagina che è possibile proteggere settando come 'True' la variabile in questione.
 
+\begin{shaded}
 \begin{lstlisting}
 VIEW_WITH_LOGIN_REQUIRED = {
     'add-to-cart': True, #True or False
@@ -70,9 +73,11 @@ VIEW_WITH_LOGIN_REQUIRED = {
     'checkout': False, #True or False
 }
 \end{lstlisting}
+\end{shaded}
 
 Se una vista è protetta da decoratore, sarà dunque scandito l'elenco di variabili: se la variabile corrispondente è uguale a True, sarà chiamato un altro decoratore, nativo del framework Django, @login\textunderscore required, che verificherà lo stato dell'utente, che se loggato procederà verso la pagina richiesta, altrimenti sarà rediretto alla pagina di login.
 
+\begin{shaded}
 \begin{lstlisting}
 def permissions_required(view_name):
     
@@ -84,21 +89,25 @@ def permissions_required(view_name):
 
     return decorator
 \end{lstlisting}
+\end{shaded}
 
 Comunque si può scegliere di non proteggere alcuna vista e permettere la libera navigazione all'utente che agirà come utente anonimo, potendo aggiungere prodotti al carrello, andare alla cassa, decidere di completare l'acquisto e quindi effettuare il pagamento.
 
 \subsection{Pagina di login}
 La pagina di login è stata modificata facendo un override di quella esistente attraverso il linguaggio di template di django, che permette, tra le altre cose, di ereditare da una pagina html e sovrascrivere i blocchi che si vuole.
 
+\begin{shaded}
 \begin{lstlisting}[language=html]
 {% extends "lfs/customer/login.html" %} -> inheritance
 {% block wrapper %} -> blocco da sovrascrivere
 ...
 {% endblock %}
 \end{lstlisting}
+\end{shaded}
 
 richiesta di connessione in poll 
 
+\begin{shaded}
 \begin{lstlisting}[language=JavaScript]
 
 var myVar = setInterval(function(){
@@ -111,6 +120,7 @@ var myVar = setInterval(function(){
     }, 500);
 
 \end{lstlisting}
+\end{shaded}
 
 \begin{figure}
 \includegraphics[width=0.9\columnwidth]{img/checkout}
@@ -135,6 +145,7 @@ Il modello è l'unica fonte di informazione a riguardo dei dati che vogliamo mem
 
 Quello che vogliamo fare è modificare il modello che definisce la gestione delle informazioni riferite all'utente. Per far questo, si è creato un file models.py, contenente una nuova classe che rappresenta il modello. Questa eredita da FacebookProfileModel la quale è la classe del pacchetto django-facebook che gestiva le informazioni ottenute dal backend di Facebook.
 
+\begin{shaded}
 \begin{lstlisting}
 class LfsFbUser(FacebookProfileModel):
     user = models.OneToOneField(User)
@@ -145,13 +156,15 @@ class LfsFbUser(FacebookProfileModel):
     class Meta():
             db_table = 'fb_data'
 \end{lstlisting}
+\end{shaded}
 
 Per settare django affinchè usi il modello appena creato, bisogna modificare il file di setting, aggiungendo infondo al file oppure modificando la voce esistente, in modo da avere:
 
+\begin{shaded}
 \begin{lstlisting}
 AUTH_PROFILE_MODULE = 'lfs_facebook.LfsFbUser'
 \end{lstlisting}
-
+\end{shaded}
 
 \section{Facebook plugin}
 All'interno delle pagine html si è fatto uso di svariati plugin il codice è fornito in automatica agli sviluppatori registrati sulla piattaforma.
@@ -171,41 +184,49 @@ Per far ciò bisogna connfigurare il sistema specificando l'identificativo della
 \includegraphics[width=0.9\columnwidth]{img/checkout}
 \end{figure}
 
+\begin{shaded}
 \begin{lstlisting}
 FACEBOOK_PAGE = 'YOUR PAGE ID'
 \end{lstlisting}
+\end{shaded}
 
 Per distinguere un prodotto riservato ai fan, si utilizza una zaratteristica di LFS che sono le "PROPRIETA". queste si possono gestire da web, loggandosi attraverso un utente amminstratore ed entrando nella sezione gestione del sito. Cosa importante è il titolo della proprietà, in quanto questo attributo verrà poi utilizzato nel codice.
- 
+
+\begin{shaded}
 \begin{lstlisting}
 fb_reserved = "False"
     for p in product.get_properties():
         if p.title == settings.FACEBOOK_FAN_RESERVED_PROPERTY:
             fb_reserved = "True"
 \end{lstlisting}
+\end{shaded}
 
 Il titolo da adottare è settabile anch'esso nel setting.py:
 
+\begin{shaded}
 \begin{lstlisting}
 FACEBOOK_FAN_RESERVED_PROPERTY = "YOUR PROPERTY TITLE"
 \end{lstlisting}
+\end{shaded}
 
 Trovate le modalità per marcare un prodotto come riservato, è importante vedere come controllare se l'utente soddisfa i requisiti per effettuare l'acquisto.
 
 Per far questo si è ricorso ad una FQL Query che selezione un user ID se ha tra i propri mi piace alle pagine, quello ricercato.
 
+\begin{shaded}
 \begin{lstlisting}
 var fql_query = "SELECT uid 
 				FROM page_fan 
 				WHERE page_id = "+fbPage+
 				" and uid = "+user_id;
 \end{lstlisting}
+\end{shaded}
 
 nota: Per effettuare questa query è necessario aver richiesto i permessi in fase di login. 
 
 Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conesguenza; in particolare, attraverso jQuery, se l'utente è abilitato all'acquisto, si abilita il pulsante di aggiunta al carrello e si mostra un determinato messaggio, altrimenti si disibalita il pulsante e si mostra un messaggio complementare.
 
-
+\begin{shaded}
 \begin{lstlisting}
     $(document).ready(FB.api({
         method: 'fql.query',
@@ -226,6 +247,7 @@ Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conesguenza; i
         }
     }));
 \end{lstlisting}
+\end{shaded}
 
 \section{Internazionalizzazione}
 Lo sviluppo di un’applicazione web richiede, sempre più frequentemente, di potere essere utilizzata da una moltitudine di utenti di lingue e culture diverse.

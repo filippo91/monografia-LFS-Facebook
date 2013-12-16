@@ -42,23 +42,25 @@
 }
 
 %gray frame for code ;) GREAT SOLUTION!!
-\usepackage{framed}
-\definecolor{shadecolor}{gray}{0.95}
+%\usepackage{framed}
+%\definecolor{shadecolor}{gray}{0.95}
+
+\usepackage{subfigure}
 
 \begin{document}
 
 
-
+\definecolor{lightgrey}{rgb}{0.95,0.95,0.95}
 \lstset{
 	language=Python,
-	basicstyle=\small, % print whole listing small
+	basicstyle=\small\sffamily, % print whole listing small
 	keywordstyle=\color{black}\bfseries,% underlined bold black keywords
 	identifierstyle=\color{black}, % nothing happens
-	commentstyle=\color{white}, % white comments
-	stringstyle=\ttfamily, % typewriter type for strings
+	commentstyle=\color{black},
+	stringstyle=\sffamily, % typewriter type for strings
 	showstringspaces=false,
 	%frame=single,
-	%backgroundcolor=\color{GreenYellow},
+	backgroundcolor=\color{lightgrey}
 	} 
 
 

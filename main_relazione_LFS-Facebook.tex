@@ -16,11 +16,12 @@
 \usepackage[T1]{fontenc}
 
 \usepackage{listings}
+\usepackage[usenames,dvipsnames]{color}
 
 %specifiche per il frontespizio
 \FacoltaDi{}
 \corsodilaurea{Ingegneria Informatica}
-\monografia{LFS-Facebook}
+\monografia{LFS-Facebook: integrazione di un'applicazione e-commerce sulla piattaforma Facebook}
 \tutore{Marco Torchiano}
 \tutoreaziendale{Fabrizio Reale}
 \candidato{Filippo Projetto}
@@ -47,11 +48,13 @@
 \lstset{
 	language=Python,
 	basicstyle=\small, % print whole listing small
-	keywordstyle=\color{green}\bfseries,% underlined bold black keywords
-	identifierstyle=\color{black}\bfseries, % nothing happens
+	keywordstyle=\color{black}\bfseries,% underlined bold black keywords
+	identifierstyle=\color{black}, % nothing happens
 	commentstyle=\color{white}, % white comments
 	stringstyle=\ttfamily, % typewriter type for strings
 	showstringspaces=false,
+	frame=single,
+	backgroundcolor=\color{GreenYellow},
 	} 
 
 

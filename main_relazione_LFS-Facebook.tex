@@ -19,24 +19,26 @@
 \usepackage[usenames,dvipsnames]{color}
 
 %specifiche per il frontespizio
+\facolta{DIPARTIMENTO DI AUTOMATICA E INFORMATICA}
 \FacoltaDi{}
 \corsodilaurea{Ingegneria Informatica}
-\monografia{LFS-Facebook: integrazione di un'applicazione e-commerce sulla piattaforma Facebook}
+\monografia{LFS-Facebook}
+\sottotitolo{integrazione di un'applicazione e-commerce sulla piattaforma Facebook}
 \tutore{Marco Torchiano}
-\tutoreaziendale{Fabrizio Reale}
 \candidato{Filippo Projetto}
+\logosede{img/logopolito}
 
 \lstdefinelanguage{JavaScript}{
   keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
   keywordstyle=\color{blue}\bfseries,
-  ndkeywords={class, export, boolean, throw, implements, import, this},
-  ndkeywordstyle=\color{darkgray}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this, def},
+  ndkeywordstyle=\color{OliveGreen}\bfseries,
   identifierstyle=\color{black},
   sensitive=false,
   comment=[l]{//},
   morecomment=[s]{/*}{*/},
-  commentstyle=\color{purple}\ttfamily,
-  stringstyle=\color{red}\ttfamily,
+  commentstyle=\color{black}\ttfamily,
+  stringstyle=\color{red}\sffamily,
   morestring=[b]',
   morestring=[b]"
 }
@@ -52,12 +54,12 @@
 
 \definecolor{lightgrey}{rgb}{0.95,0.95,0.95}
 \lstset{
-	language=Python,
+	language=JavaScript,
 	basicstyle=\small\sffamily, % print whole listing small
-	keywordstyle=\color{black}\bfseries,% underlined bold black keywords
-	identifierstyle=\color{black}, % nothing happens
-	commentstyle=\color{black},
-	stringstyle=\sffamily, % typewriter type for strings
+	%keywordstyle=\color{black}\bfseries,% underlined bold black keywords
+	%identifierstyle=\color{black}, % nothing happens
+	%commentstyle=\color{black},
+	%stringstyle=\sffamily, % typewriter type for strings
 	showstringspaces=false,
 	%frame=single,
 	backgroundcolor=\color{lightgrey}
@@ -73,5 +75,24 @@
 \include{LFS-Facebook}
 
 \include{conclusioni}
+
+%\begin{thebibliography}{RedBook}
+%\bibitem[Javascript]{javascript}
+%	{\scshape Douglas Crockford},
+%	{\itshape JavaScript: The Good Parts},
+%	1st edition,
+%	O'Reilly Media, May 2008
+%
+%
+%\bibitem[Python]
+%	Python documentation
+%	\url{http://docs.python.org/}
+%
+%	
+%\bibitem[Django]
+%	django framework documentation
+%	\url{https://www.djangoproject.com/}
+%
+%\end{thebibliography}
 
 \end{document}

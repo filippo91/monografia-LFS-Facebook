@@ -1,24 +1,51 @@
 \chapter{LFS-Facebook}
-
 \section{Progetti di partenza}
-Una fase preliminare del tirocinio è stata impiegata principalmente nello studio di due progetti open source: LFS e django-facebook.
+La parte iniziale del tirocinio è stata impiegata principalmente nello studio di Python,il framework django e di due progetti open source: LFS e django-facebook.
 
-LFS è un negozio online che  si basa su Python, Django(Web framework per Python) e jQuery. A questo è stato aggiunto poi un tema responsivo (anch'esso basato su un altro progetto open-source, bootstrap), ed il tutto ha rappresentato la base sulla quale aggiungere delle funzionalità legate principalmente alla sua integrazione come applicazione fruibile su Facebook. 
+\vspace{2.5 mm}
+LFS\footnote{http://www.getlfs.com} è un negozio online che  si basa su Python, django(Web framework per Python) e jQuery. A questo è stato aggiunto poi un tema responsivo (anch'esso basato su un altro progetto open-source, bootstrap), ed il tutto ha rappresentato la base sulla quale aggiungere delle funzionalità legate principalmente alla sua integrazione come applicazione fruibile su Facebook. 
 
-Django-facebook, invece, permette ad applicazioni django di registrare gli utenti tramite backend Facebook, convertendo i dati ricevuti dall'operazione di log in con Facebook, in un modello consono alle modalità di storing attraverso django.
+\vspace{2.5 mm}
+django-facebook\footnote{http://pypi.python.org/pypi/django-facebook}, invece, permette ad applicazioni django di registrare gli utenti tramite backend Facebook, convertendo i dati ricevuti dall'operazione di log in con Facebook, in un modello consono alle modalità di storing attraverso django.
+
+\vspace{2.5 mm}
+Inoltre, si è fatto anche un overview di Bootstrap\footnote{http://getbootstrap.com/}, un framework per lo sviluppo web client-side, che ho trovato molto interessante in quanto ha come obiettivo principale quello di supportare la navigazione da mobile; in particolare, Bootstrap adatta in modo automatico le pagine web alle dimensioni dello schermo. 
+\newpage
+\section{Struttura del pacchetto LFS-Facebook}
+\begin{figure}
+LFS-Facebook è un pacchetto che aggiunge funzionalità social ad un e-commerce. In quanto applicazione scritta sfruttando il framework django, si struttura come riportato in figura \ref{fig:package_structure}. La struttura base è stata generata attraverso il comando:
+\begin{lstlisting}
+python manage.py startapp myapp
+\end{lstlisting}
+\begin{minipage}{.40\textwidth}
+	\includegraphics[width=.90\textwidth]{img/package_structure}
+	\caption{package structure\label{fig:package_structure}}
+\end{minipage}
+\begin{minipage}{.60\textwidth}
+Descrizione dei principali contenuti del pacchetto:
+\begin{itemize}
+	\item \textbf{views.py} definisce quelle funzioni che elaborano informazioni per poi chiamare il template html (avendo la possibilità di passare dei dati sottoforma di "context") che verrà visualizzato;
+	\item \textbf{urls.py} dato un URL, specifica quale funzione chiamare (che quindi risiederà in views.py), è quindi un semplice file che realizza un mapping;
+	\item \textbf{models.py} definisce contenuto e comportamento dei dati (vedi \ref{models});
+	\item \textbf{locale} contiene informazione per l'internazionalizzazione (vedi \ref{intern});
+	\item \textbf{templates} contiene il codice html delle pagine web, utilizzando anche il linguaggio di templating proprio di django;
+	\item \textbf{decorators.py} definisce un nuovo decoratore (vedi \ref{decorators});
+	\item \textbf{catalog/patches.py} personalizzazione di funzioni pre-esistenti in LFS (vedi \ref{patches}).
+	
+\end{itemize}
+\end{minipage}
+\end{figure}
 
 \section{Gestione backend di autenticazione}
-Un'esigenza che un progetto di un'applicazione potrebbe avere è quella di dover/voler pescare da un'altra sorgente di usernames e passwords.
-
+Un'esigenza che un progetto di un'applicazione potrebbe avere è quella di dover/voler pescare da un'altra sorgente di usernames e passwords.\\
 Questo è proprio il nostro caso, vogliamo usare come backend di autenticazione quello di Facebook.
 Per iniziare si è testata un'applicazione django come LFS con LDAP. 
 
+\vspace{2.5 mm}
 LDAP è un protocollo di livello applicativo per accedere e gestire servizi di directory su una rete IP. Uno degli usi più comuni di LDAP è quello di fornire un “single sign-on” dove per la coppia d'informazioni utente:password è condivisa tra diversi servizi.
-Nel nostro caso è stato utilizzato openLDAP, un'implementazione opensource del suddetto protocollo.
-
-Per aggiungere questa funzionalità ad un'applicazione Django è necessario modificare la variabile AUTHENTICATION BACKENDS del file setting.py, in particolare Django mantiene una lista di “authentication backends” che egli verifica per ogni autenticazione. 
-
-Quando qualcuno cerca di autenticarsi, Django prova l'autenticazione lungo tutta la lista di backend per cui è impostato. 
+Nel nostro caso è stato utilizzato openLDAP, un'implementazione opensource del suddetto protocollo.\\
+Per aggiungere questa funzionalità ad un'applicazione django è necessario modificare la variabile AUTHENTICATION BACKENDS del file setting.py, in particolare django mantiene una lista di “authentication backends” che egli verifica per ogni autenticazione.\\
+Quando qualcuno cerca di autenticarsi, django prova l'autenticazione lungo tutta la lista di backend per cui è impostato. 
 Attenzione che l'ordine è importante in quanto django si fermerà al primo match positivo.
 
 Per quanto riguardo openLDAP sono necessarie anche tutta un'altra serie di impostazioni da specificare per l'accesso al server, e la ricerca; qui un esempio di configurazione minimale:
@@ -32,21 +59,18 @@ AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=users,dc=example,dc=com",
 \end{lstlisting}
 vengono così configurate  due operazioni fondamentali: Bind, che esegue l'autenticazione, e Search che esegue una ricerca. Nella struttura ad albero, ad ogni livello esiste un Relative distinguished name (RDN) che lo identifica (ad esempio ou=people). L'unione di tutti i RDN, presi in successione dal nodo foglia fino alla radice, costituisce il distinguished name (DN), una stringa che rappresenta univocamente una entry nella directory. Nell'esempio di configurazione viene fornito il DN di un utente che ha i permessi per fare determinate azioni, e diamo il sottoalbero dove ricercare gli utenti come primo parametro della LDAPSearch.
  
+\vspace{2.5 mm}
 Mentre per quanto riguarda il backend di autenticazione di Facebook è sufficente aggiungere al file di setting:
 
 \begin{lstlisting}
-
 AUTHENTICATION_BACKENDS = (
 	'django_facebook.auth_backends.FacebookBackend',
 	'django_auth_ldap.backend.LDAPBackend',
 	'django.contrib.auth.backends.ModelBackend'
 )
-
 \end{lstlisting}
-
 Da notare che va inserito in testa alla lista.
-
-\newpage 
+\newpage
 \section{Integrazione dell'applicazione sulla piattaforma Facebook}
 \begin{figure}
 \centering
@@ -69,19 +93,14 @@ Accedendo alla pagina principale dell'applicazione sono disponibili le due crede
 Adesso vanno inserite nel file di setting del progetto:
 
 \begin{lstlisting}
-
 FACEBOOK_APP_ID = 'YOUR APP ID'
 FACEBOOK_APP_SECRET = 'YOUR APP SECRET NUMBER'
-
 \end{lstlisting}
 \begin{figure}
 \centering
 \includegraphics[width=0.9\columnwidth]{img/app_home2}
 \caption{basic page for your app}
 \end{figure}
-
-%FACEBOOK_CANVAS_PAGE = 'https://apps.facebook.com/%s/' % FACEBOOK_APP_ID
-
 Da notare che è richiesta una connessione https.
 
 \subsection{Facebook plugin}
@@ -95,7 +114,7 @@ SELECT [fields] FROM [table] WHERE [conditions].
 \end{lstlisting}
 Diversamente da SQL la clausola FROM può contenere solo una tabella. Ad ogni query ci si può riferire all'utente loggato attraverso "me()". 
 
-\section{Protezione delle viste con autenticazione richiesta}
+\section{Protezione delle viste con autenticazione richiesta}\label{decorators}
 L'applicazione si presenta senza un link ad una pagina di login, in quanto l'utente sarà automaticamente rediretto alla procedura di autenticazione quando e se necessario. 
 
 Per ottenere questo comportamento si è scelto di creare un decoratore che protegga le viste desiderate.
@@ -103,22 +122,19 @@ Le viste da proteggere non sono imposte dal sistema, ma è tutto pienamente conf
 
 
 \begin{lstlisting}
-
 VIEW_WITH_LOGIN_REQUIRED = {
-    'add-to-cart': True, #True or False
-    'shop': False, #True or False
-    'category': False, #True or False
-    'product': False, #True or False
-    'checkout': False, #True or False
+    'add-to-cart': True,
+    'shop': False,
+    'category': False,
+    'product': False,
+    'checkout': False,
 }
-
 \end{lstlisting}
 
 
-Se una vista è protetta da decoratore, sarà dunque scandito l'elenco di variabili: se la variabile corrispondente è uguale a True, sarà chiamato un altro decoratore, nativo del framework Django, @login\textunderscore required, che verificherà lo stato dell'utente, che se loggato procederà verso la pagina richiesta, altrimenti sarà rediretto alla pagina di login.
+Se una vista è protetta da decoratore, sarà dunque scandito l'elenco di variabili: se la variabile corrispondente è uguale a True, sarà chiamato un altro decoratore, nativo del framework django, @login\textunderscore required, che verificherà lo stato dell'utente, che se loggato procederà verso la pagina richiesta, altrimenti sarà rediretto alla pagina di login.
 
 \begin{lstlisting}
-
 def permissions_required(view_name):
     
     def decorator(func):
@@ -128,22 +144,28 @@ def permissions_required(view_name):
             return func
 
     return decorator
-    
 \end{lstlisting}
 
 Comunque si può scegliere di non proteggere alcuna vista e permettere la libera navigazione all'utente che agirà come utente anonimo, potendo aggiungere prodotti al carrello, andare alla cassa, decidere di completare l'acquisto e quindi effettuare il pagamento.
+
+\subparagraph{patches}\label{patches}
+Affinchè siano chiamate la versioni delle nostre funzioni, rappresentanti le viste che devono sovrascrivere quelle già esistenti nel package di LFS, abbiamo usato il meccanismo delle patches.
+Per far questo abbiamo:
+\begin{itemize}
+\item creato un file nel package della nostra applicazione, nel quale importare la funzione di cui si vuole fare la patch;
+\item implementato la nostra funzione la quale deve avere gli stessi parametri di input di quella da sovrascrivere;
+\item e infine sostituito la vecchia funzione con la nostra: <nome funzione da sovrascrivere> = <nome nostra funzione>
+\end{itemize}
 
 \subsection{Pagina di login}
 La pagina di login è stata modificata facendo un override di quella esistente attraverso il linguaggio di template di django, che permette, tra le altre cose, di ereditare da una pagina html e sovrascrivere i blocchi che si vuole.
 
 
 \begin{lstlisting}[language=html]
-
 {% extends "lfs/customer/login.html" %} -> inheritance
 {% block wrapper %} -> blocco da sovrascrivere
 ...
 {% endblock %}
-
 \end{lstlisting}
 
 \begin{figure}
@@ -152,10 +174,9 @@ La pagina di login è stata modificata facendo un override di quella esistente a
 \caption{richiesta permessi da parte dell'applicazione}
 \end{figure}
 
-Si è scelto di presentare una pagina di login che non richieda nessuna interazione all'utente, infatti l'autenticazione si avvierà in automatico. Per far questo si è utilizzato del codice javascript di django-facebook che effettua il login facebook attraverso le facebook API; il tutto viene scatenato dall'istruzione "F.connect()", ma essendo F una variabile che viene caricata asincronamente, è stato necessario inserire la F.connect all'interno della funzione setInterval (utility di javascript) che prova a chiamare la F.connect ad intervalli di tempo prefissati finchè non avrà successo, ovvero fin quando F non sarà definita. Il meccanismo di chiamata periodica ad uno script verrà fermato attraverso il clearInterval().
+Si è scelto di presentare una pagina di login che non richieda nessuna interazione all'utente, infatti l'autenticazione si avvierà in automatico. Per far questo si è utilizzato del codice javascript di django-facebook che effettua il login facebook attraverso le facebook API; il tutto viene scatenato dall'istruzione "F.connect()", ma essendo F una variabile che viene caricata asincronamente, è stato necessario inserire la F.connect all'interno della funzione setInterval (utility di javascript) che proverà a chiamare la F.connect ad intervalli di tempo prefissati finchè non avrà successo, ovvero fin quando F non sarà definita. Il meccanismo di chiamata periodica ad uno script verrà fermato attraverso il clearInterval().
 
 \begin{lstlisting}[language=JavaScript]
-
 var myVar = setInterval(function(){
     if(F !== undefined){
         F.connect(document.getElementById('facebook_form'), 
@@ -164,16 +185,15 @@ var myVar = setInterval(function(){
         clearInterval(myVar);
     }
     }, 500);
-
 \end{lstlisting}
 
 \subparagraph{template override}
-L'override di un template pre-esistente viene effettuato creando un file html con lo stesso identico nome e dovrà essere riprodotta l'alberatura. Per esempio se voglio sovrascrivere lfs/templates/lfs/base.html, dovrò creare un file base.html in myapp/templates/lfs/base.html. 
+L'override di un template pre-esistente viene effettuato creando un file html con lo stesso identico nome e dovrà essere riprodotta l'alberatura \ref{fig:package_structure}. Per esempio se voglio sovrascrivere lfs/templates/lfs/base.html, dovrò creare un file base.html in myapp/templates/lfs/base.html. 
 
 Dopodichè è necessario anche intervenire nel file di setting ed assicurarsi che fra le INSTALLED\_ APPS, myapp appaia prima della applicazione di cui vogliamo sovrascrivere il template.
 
 \subsection{Pagina di checkout}
-La pagina di checkout è l'ultima pagina prima di procedere all'inserimenrto dati per effettuare il pagamento e completare l'acquisto.
+La pagina di checkout è l'ultima pagina della user experience, prima di procedere all'inserimenrto dati per effettuare il pagamento e completare l'acquisto.
 
 Anche di questa pagina è stato fatto un override per visualizzare ancora la possibilità di registrarsi prima dell'acquisto. Se si effettua il login sarà possibile gestire lo stato degli ordini e salvare i dati per prossime spedizioni. Il pulsante del login è un normale elemento html(non un faceboook plugin) il quale stile è stato reso simile a quello Facebook attraverso css. 
 
@@ -183,13 +203,12 @@ Anche di questa pagina è stato fatto un override per visualizzare ancora la pos
 \caption{checkout page}
 \end{figure}
 
-\section{Personalizzazione del modello utente}
-Il modello è l'unica fonte di informazione a riguardo dei dati che vogliamo memorizzare. Esso contiene i campi e il comportamento per la memorizzazione. 
+\section{Personalizzazione del modello utente}\label{models}
+Il modello, con django, è l'unica fonte di informazione a riguardo dei dati che vogliamo memorizzare. Esso contiene i campi e il comportamento per la memorizzazione. 
 
-Quello che vogliamo fare è modificare il modello che definisce la gestione delle informazioni riferite all'utente. Per far questo, si è creato un file models.py, contenente una nuova classe che rappresenta il modello. Questa eredita da FacebookProfileModel la quale è la classe del pacchetto django-facebook che gestiva le informazioni ottenute dal backend di Facebook.
+Quello che vogliamo fare è modificare il modello che definisce la gestione delle informazioni riferite all'utente. Per far questo, si è creato un file models.py, contenente una nuova classe che rappresenta il modello. Questa eredita da FacebookProfileModel la quale è la classe del pacchetto django-facebook che gestiva le informazioni ottenute dal backend di autenticazione di Facebook.
 
 \begin{lstlisting}
-
 class LfsFbUser(FacebookProfileModel):
     user = models.OneToOneField(User)
     fb_like_flag = models.BooleanField(default=False)
@@ -197,67 +216,58 @@ class LfsFbUser(FacebookProfileModel):
 	...	
 	
     class Meta():
-            db_table = 'fb_data'
-            
+            db_table = 'fb_data'            
 \end{lstlisting}
+Assicuriamoci a questo punto che l'applicazione dove risiede il models.py dov'è definita la classe LfsFbUser, sia tra le INSTALLED\_APPS del file di setting, e poi bisogna lanciare il comando: 
+\begin{lstlisting}
+python manage.py syncdb
+\end{lstlisting}
+che crea le tabelle del database(non ancora create) per le apps specificate.
 
-Per settare django affinchè usi il modello appena creato, bisogna modificare il file di setting, aggiungendo infondo al file oppure modificando la voce esistente, in modo da avere:
+Per settare django affinchè usi il modello appena creato, come modello per l'autenticazione, bisogna modificare il file di setting, aggiungendo al fondo del file oppure modificando la voce esistente, in modo da avere:
 
 \begin{lstlisting}
-
 AUTH_PROFILE_MODULE = 'LFS-Facebook.LfsFbUser'
-
 \end{lstlisting}
 
 \section{Prodotti riservati ai fan}
-Come feature aggiuntiva si è pensato di dare la possibilità a chi mette in piedi l'e-commerce, di poter riservare l'acquisto di un prodotto soltanto chi è un Facebook fan, ovvero a chi ha messo il "mi piace" alla pagina Facebook del negozio.
+Come feature aggiuntiva si è pensato di dare la possibilità a chi mette in piedi l'e-commerce, di poter riservare l'acquisto di un prodotto soltanto ai Facebook fan, ovvero a chi ha messo il "mi piace" alla pagina Facebook del negozio.
 
-Per far ciò bisogna connfigurare il sistema specificando l'identificativo della pagina facebook nel solito file di setting, come segue:
-%\begin{figure}
-%
-%\end{figure}
+Per far ciò bisogna configurare il sistema specificando l'identificativo della pagina facebook nel solito file di setting, come segue:
 
 \begin{lstlisting}
-
 FACEBOOK_PAGE = 'YOUR PAGE ID'
-
 \end{lstlisting}
 
-Per distinguere un prodotto riservato ai fan, si utilizza una zaratteristica di LFS che sono le "PROPRIETA". queste si possono gestire da web, loggandosi attraverso un utente amminstratore ed entrando nella sezione gestione del sito. Cosa importante è il titolo della proprietà, in quanto questo attributo verrà poi utilizzato nel codice.
+Per distinguere un prodotto riservato ai fan, si utilizza una caratteristica di LFS che sono le "PROPRIETA". queste si possono gestire da web, loggandosi attraverso un utente amminstratore ed entrando nella sezione gestione del sito. Cosa importante è il titolo della proprietà, in quanto questo attributo verrà poi utilizzato nel codice.
 
 \begin{lstlisting}
-
 fb_reserved = "False"
     for p in product.get_properties():
         if p.title == settings.FACEBOOK_FAN_RESERVED_PROPERTY:
-            fb_reserved = "True"
-            
+            fb_reserved = "True"            
 \end{lstlisting}
 
 Il titolo da adottare è settabile anch'esso nel setting.py:
 
 \begin{lstlisting}
-
 FACEBOOK_FAN_RESERVED_PROPERTY = "YOUR PROPERTY TITLE"
-
 \end{lstlisting}
 
 Trovate le modalità per marcare un prodotto come riservato, è importante vedere come controllare se l'utente soddisfa i requisiti per effettuare l'acquisto.
 
-Per far questo si è ricorso ad una FQL Query che selezione un user ID se ha tra i propri mi piace alle pagine, quello ricercato.
+Per far questo si è ricorso ad una FQL Query che seleziona un user ID solo se presenta tra la lista di pagine ottenute con la query, la pagina Facebook dell'applicazione.
 
 \begin{lstlisting}
-
 var fql_query = "SELECT uid 
 		FROM page_fan 
 		WHERE page_id = "+fbPage+
-		" and uid = "+user_id;
-				
+		" and uid = "+user_id;				
 \end{lstlisting}
 
 nota: Per effettuare questa query è necessario aver richiesto i permessi in fase di login. 
 
-Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conesguenza; in particolare, attraverso jQuery, se l'utente è abilitato all'acquisto, si abilita il pulsante di aggiunta al carrello e si mostra un determinato messaggio, altrimenti si disibalita il pulsante e si mostra un messaggio complementare.
+Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conseguenza; in particolare, attraverso jQuery, se l'utente è abilitato all'acquisto, si abilita il pulsante di aggiunta al carrello e si mostra un determinato messaggio, altrimenti si disibalita il pulsante e si mostra un messaggio complementare.
 \begin{figure}
 \centering
 \subfigure[no reserved product]
@@ -271,7 +281,6 @@ Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conesguenza; i
 \caption{product view}
 \end{figure}
 \begin{lstlisting}
-
     $(document).ready(FB.api({
         method: 'fql.query',
         query: fql_query
@@ -290,10 +299,9 @@ Attraverso una Facebook API, eseguiamo la query, e ci muoviamo di conesguenza; i
             $("#fb-already-like").hide();
         }
     }));
-
 \end{lstlisting}
-
-\section{Internazionalizzazione}
+\newpage
+\section{Internazionalizzazione}\label{intern}
 Lo sviluppo di un’applicazione web richiede, sempre più frequentemente, di potere essere utilizzata da una moltitudine di utenti di lingue e culture diverse.
 
 La soluzione a questa esigenza è di consentire a questi utenti di poter scegliere la lingua con cui desiderano navigare le pagine dell’applicazione stessa.
@@ -307,7 +315,7 @@ lblMessaggio.Text = “Ciao Mondo!”
 
 deve essere riscritto in modo che la stringa “Ciao Mondo!” non sia statica, ma possa variare in modalità runtime secondo la lingua scelta dall’utente.
 
-Django supporta pienamente la traduzione del testo, formattazione delle date, orari, numeri e  time zones.
+django supporta pienamente la traduzione del testo, formattazione delle date, orari, numeri e  time zones.
 
 Questo viene fatto essenzialmente attraverso due passi:
 \begin{itemize}
@@ -332,6 +340,42 @@ il quale crea un file con l'elenco delle voci da tradurre e la giusta alberatura
 \begin{lstlisting}
 <django-admin.py compilemessages>
 \end{lstlisting}
-verrà creato il file di estensione .mo utilizzato dal sistema per le traduzioni.
+verrà creato il file di estensione .mo utilizzato dal sistema per le traduzioni \ref{fig:package_structure}.
+
+\section{Installazione del pacchetto}
+Per rendere semplice l'installazione si è creato un file .cfg per sfruttare la tecnologia buildout. Questo file ricalca quello fornito con la distribuzione di LFS ed in particolare aggiunge i due pacchetti esterni utilizzati:
+
+\begin{lstlisting}
+[sources]
+lfs_facebook = git https://github.com/filippo91/lfs_facebook.git
+lfs_responsivetheme = 
+	git https://github.com/redomino/lfs_responsivetheme.git 
+\end{lstlisting}
+
+e nuove impostazioni per come configurare django, inserendo tra le librerie django-facebook:
+
+\begin{lstlisting}
+[django]
+recipe = djangorecipe
+eggs =
+    django-lfs
+    gunicorn
+    django_facebook
+project = lfs_project
+settings=settings
+extra-paths =
+    \${buildout:directory}/parts
+    \${buildout:directory}/lfs_project
+    \${buildout:directory}/src
+    \${buildout:directory}/src/lfs_facebook
+    \${buildout:directory}/src/lfs_responsivetheme
+\end{lstlisting}
+
+Per garantire che sia installata la stessa versione del software, basta inserire nel file .cfg:
+\begin{lstlisting}
+extends =
+    versions.cfg
+\end{lstlisting}
+che specifica un file in cui è elencata la versione da installare per ogni pacchetto.
 
 \endinput
